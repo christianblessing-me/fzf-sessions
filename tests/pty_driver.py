@@ -2,12 +2,15 @@
 import fcntl
 import ast
 import json
+import http.client
 import os
 from pathlib import Path
 import pty
 import re
 import select
 import signal
+import shutil
+import socket
 import struct
 import subprocess
 import sys
@@ -106,8 +109,44 @@ def environment(root):
         binary = binaries / name
         binary.write_text('#!/bin/sh\necho "Unexpected agent launch in terminal test" >&2\nexit 99\n')
         binary.chmod(0o755)
+    real_fzf = shutil.which('fzf')
+    wrapper = binaries / 'fzf'
+    # Add a private test-only state socket to interactive fzf. Filter and version
+    # subprocesses must not replace the interactive socket.
+    wrapper.write_text(f'''#!{sys.executable}
+import os,sys
+args=sys.argv[1:]
+extra=[] if any(a.startswith(('--filter','--version')) for a in args) else ['--listen='+os.environ['TEST_FZF_SOCKET']]
+os.execv({real_fzf!r}, [{real_fzf!r}, *args, *extra])
+''')
+    wrapper.chmod(0o755)
+    env['TEST_FZF_SOCKET'] = str(root / 'fzf.sock')
+    env.pop('FZF_API_KEY', None)
     env['PATH'] = str(binaries) + os.pathsep + env.get('PATH', '')
     return env
+
+
+def wait_for_state(terminal, env, predicate, timeout=6):
+    deadline = time.monotonic() + timeout
+    state = None
+    while time.monotonic() < deadline:
+        terminal.read(0.03)
+        connection = http.client.HTTPConnection('localhost', timeout=0.3)
+        try:
+            connection.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            connection.sock.settimeout(0.3)
+            connection.sock.connect(env['TEST_FZF_SOCKET'])
+            connection.request('GET', '/')
+            state = json.loads(connection.getresponse().read())
+            if predicate(state):
+                return state
+        except (OSError, ValueError, http.client.HTTPException):
+            pass
+        finally:
+            connection.close()
+        if terminal.process.poll() is not None:
+            break
+    raise AssertionError(f'fzf did not reach the expected state; last state={state!r}')
 
 
 def fixture(root, session_id, title, body):
@@ -219,33 +258,24 @@ print(json.dumps({{'result':result}}))
     terminal = Terminal([sys.executable, str(ENTRYPOINT), '--herdr'], env)
     try:
         terminal.until(b'SESSION')
-        deadline = time.monotonic() + 2
-        while time.monotonic() < deadline:
-            terminal.read()
-            if log.exists() and 'snapshot' in log.read_text():
-                break
-        deadline = time.monotonic() + .4
-        while time.monotonic() < deadline:
-            terminal.read()
+        def first_is_open(state, sid):
+            matches = state.get('matches') or []
+            return (not state.get('reading') and len(matches) == 2
+                    and sid in matches[0]['text'] and '●' in matches[0]['text'])
+        wait_for_state(terminal, env, lambda state: first_is_open(state, 'second-id'))
         set_state('first-id', 'first-pane')
         terminal.output = b''
-        terminal.send(b'needle')
+        terminal.send(b'need')
+        wait_for_state(terminal, env, lambda state: state.get('query') == 'need' and not state.get('reading'))
         terminal.send(b'\x1br')
-        terminal.until(b'Directory / title')
-        # Wait for the new live read, then enter: the first sorted result must be first-id.
-        deadline = time.monotonic() + 4
-        while time.monotonic() < deadline:
-            terminal.read()
-            if log.exists() and log.read_text().count('snapshot') >= 2:
-                break
-        else:
-            raise AssertionError('Alt-R did not request a second snapshot')
-        deadline = time.monotonic() + 0.4
-        while time.monotonic() < deadline:
-            terminal.read()
+        wait_for_state(terminal, env, lambda state: state.get('query') == 'need' and first_is_open(state, 'first-id'))
+        assert log.read_text().count('snapshot') >= 2, 'Alt-R did not request a second snapshot'
+        terminal.send(b'le')
+        wait_for_state(terminal, env, lambda state: state.get('query') == 'needle' and first_is_open(state, 'first-id'))
         # Reload may preserve the previously selected session. Navigate to the
         # top before asserting that the newly open session is sorted first.
         terminal.send(b'\x1b[A' * 3)
+        wait_for_state(terminal, env, lambda state: 'first-id' in (state.get('current') or {}).get('text', ''))
         terminal.send(b'\r')
         terminal.finish()
         calls = [json.loads(line) for line in log.read_text().splitlines()]
@@ -256,7 +286,7 @@ print(json.dumps({{'result':result}}))
 
 
 if __name__ == '__main__':
-    with tempfile.TemporaryDirectory(prefix='fzf-terminal-test-') as temp:
+    with tempfile.TemporaryDirectory(prefix='fzf-terminal-test-', dir='/tmp') as temp:
         root = Path(temp)
         env = environment(root)
         probe(root, env)
