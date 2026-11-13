@@ -2,7 +2,7 @@
 
 ## 0.1.0
 
-Initial release candidate. No public release has been published yet.
+Initial release — 13 November 2026.
 
 - Find and resume local Codex and Claude Code sessions across repositories.
 - Separate folder/title fuzzy search and literal conversation search.
