@@ -38,7 +38,8 @@ def install(prefix: Path, uninstall: bool = False) -> None:
             shutil.rmtree(target)
         print(f'Uninstalled from {prefix}; history and caches were preserved.')
         return
-    files = ['fzf-sessions', 'VERSION', 'herdr-plugin.toml', 'README.md', 'CHANGELOG.md', 'LICENSE', 'install.py']
+    files = ['fzf-sessions', 'VERSION', 'herdr-plugin.toml', 'README.md', 'CHANGELOG.md', 'LICENSE', 'install.py',
+             'screenshot-fzf-sessions.png']
     for name in files:
         if not (ROOT / name).is_file():
             raise RuntimeError(f'Incomplete release: {name} is missing')

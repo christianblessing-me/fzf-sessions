@@ -2,6 +2,8 @@
 
 Find your Codex and Claude Code sessions and pick up where you left off.
 
+![Session Finder open in a Herdr popup, with active sessions listed first](screenshot-fzf-sessions.png)
+
 - Search sessions across all your projects.
 - Search by folder and title, or search the conversation itself.
 - Read a preview before resuming.
