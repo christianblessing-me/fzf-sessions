@@ -1,0 +1,20 @@
+id = "fzf-sessions"
+name = "Session Finder"
+version = "0.1.0"
+min_herdr_version = "0.9.5"
+description = "Find and resume Codex and Claude Code sessions, with local search and optional on-device recaps."
+platforms = ["macos", "linux"]
+
+[[actions]]
+id = "open"
+title = "Find a coding session"
+contexts = ["workspace"]
+command = ["python3", "fzf-sessions", "--herdr-open"]
+
+[[panes]]
+id = "picker"
+title = "Session Finder"
+placement = "popup"
+width = "90%"
+height = "80%"
+command = ["python3", "fzf-sessions", "--herdr"]

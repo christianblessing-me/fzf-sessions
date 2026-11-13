@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""Find and resume local coding sessions. Standard library only."""
+import sys
+
+if sys.version_info < (3, 10):
+    sys.exit("fzf-sessions requires Python 3.10 or newer.")
+
+if sys.platform not in ("darwin", "linux"):
+    sys.exit("fzf-sessions supports macOS and Linux; Windows is not supported (use WSL).")
+
+from fzf_sessions.cli import main
+
+if __name__ == "__main__":
+    sys.exit(main())

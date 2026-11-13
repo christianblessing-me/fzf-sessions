@@ -1,0 +1,45 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ['3.10', '3.13']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.x'
+          cache: false
+      - name: Install tested fzf baseline
+        run: |
+          go install -ldflags="-X main.version=0.74.5 -X main.revision=ci" github.com/junegunn/fzf@v0.74.5
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Check release metadata
+        run: python3 scripts/release.py
+      - name: Run tests including mandatory real terminal checks
+        env:
+          FZF_SESSIONS_REQUIRE_PTY: '1'
+        run: python3 -m unittest discover -s tests -v
+      - name: Smoke-test a clean installation
+        shell: bash
+        run: |
+          python3 install.py --prefix "$RUNNER_TEMP/session finder"
+          "$RUNNER_TEMP/session finder/bin/fzf-sessions" --version
+          CODEX_HOME="$RUNNER_TEMP/no-codex" CLAUDE_CONFIG_DIR="$RUNNER_TEMP/no-claude" "$RUNNER_TEMP/session finder/bin/fzf-sessions" --list
+          python3 "$RUNNER_TEMP/session finder/share/fzf-sessions/install.py" --prefix "$RUNNER_TEMP/session finder" --uninstall
