@@ -154,11 +154,16 @@ def picker(sessions: list[models_mod.Session], query: str, dry_run: bool = False
                 "--footer=Alt-?  shortcuts",
                 "--preview", preview_command, "--preview-window=right,55%,wrap,hidden,border-left", "--preview-label= Session recap ", "--bind", bindings, *theme, *extra],
                 input="\n".join(input_rows) + "\n", text=True, stdout=subprocess.PIPE, env=env)
-            if proc.returncode in (1, 130):
+            if proc.returncode == 130:
                 return None
-            if proc.returncode:
+            if proc.returncode not in (0, 1):
                 raise RuntimeError(f"fzf exited with status {proc.returncode}")
             output = proc.stdout.splitlines()
+            # An expected shortcut can exit with status 1 when there is no
+            # selected row. Search switching and refresh must still work then.
+            expected = ("alt-s", "alt-c", "alt-r") if show_herdr else ("alt-s", "alt-c")
+            if proc.returncode == 1 and (len(output) < 2 or output[1] not in expected):
+                return None
             if not output:
                 raise RuntimeError("fzf returned an invalid selection")
             query = output.pop(0)

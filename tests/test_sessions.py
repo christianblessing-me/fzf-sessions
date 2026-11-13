@@ -36,6 +36,9 @@ def write_records(path, records):
 
 class SessionsTests(unittest.TestCase):
     def setUp(self):
+        environment = patch.dict(os.environ, {'HERDR_ENV': '0'})
+        environment.start()
+        self.addCleanup(environment.stop)
         for name in ('require_fzf', 'require_herdr'):
             check = patch.object(dependencies_mod, name, return_value='/test/checked')
             check.start()
@@ -539,7 +542,8 @@ class SessionsTests(unittest.TestCase):
             self.assertIn('alt-p:toggle-preview', args[args.index('--bind') + 1])
             if len(calls) == 1:
                 self.assertIn('--prompt=Directory / title  › ', args)
-                return subprocess.CompletedProcess(args, 0, 'unique\nalt-s\n')
+                # Real fzf returns 1 for an expected shortcut with no selection.
+                return subprocess.CompletedProcess(args, 1, 'unique\nalt-s\n')
             self.assertIn('--disabled', args)
             self.assertEqual(args[args.index('--query') + 1], 'unique')
             self.assertIn('1\t', kwargs['input'])

@@ -310,7 +310,7 @@ class HerdrTests(unittest.TestCase):
             self.assertEqual(args[args.index('--query') + 1], 'needle')
             self.assertIn(' content {q}', args[args.index('--preview') + 1])
             if len(invocations) == 2:
-                return subprocess.CompletedProcess(args, 0, 'needle\nalt-r\n')
+                return subprocess.CompletedProcess(args, 1, 'needle\nalt-r\n')
             self.assertEqual(len(refreshes), 2)
             self.assertNotIn('●', result.stdout)
             self.assertIn('—', result.stdout)

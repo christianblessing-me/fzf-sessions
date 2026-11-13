@@ -1,5 +1,6 @@
 """Run real terminal checks in a clean process; never touch a live Herdr server."""
 import fcntl
+import ast
 import json
 import os
 from pathlib import Path
@@ -23,8 +24,18 @@ class Terminal:
         self.master, self.slave = pty.openpty()
         self.original = termios.tcgetattr(self.slave)
         self.resize(rows, columns)
-        setup = 'import fcntl,os,sys,termios;fcntl.ioctl(0,termios.TIOCSCTTY,0);os.execv(sys.argv[1],sys.argv[1:])'
-        self.process = subprocess.Popen([sys.executable, '-c', setup, *command], stdin=self.slave,
+        self.metadata = tempfile.TemporaryDirectory(prefix='fzf-test-terminal-')
+        self.mode_file = Path(self.metadata.name) / 'restored-mode'
+        # Keep the controlling session alive until its final TTY state is saved.
+        # macOS invalidates slave ioctls after the session leader exits.
+        setup = '''import fcntl,sys,termios,subprocess
+from pathlib import Path
+fcntl.ioctl(0,termios.TIOCSCTTY,0)
+result=subprocess.run(sys.argv[2:])
+Path(sys.argv[1]).write_text(repr(termios.tcgetattr(0)))
+sys.exit(result.returncode)
+'''
+        self.process = subprocess.Popen([sys.executable, '-c', setup, str(self.mode_file), *command], stdin=self.slave,
             stdout=self.slave, stderr=self.slave, env=env, start_new_session=True, close_fds=True)
         self.output = b''
 
@@ -69,9 +80,14 @@ class Terminal:
             os.killpg(self.process.pid, signal.SIGTERM)
         except ProcessLookupError:
             pass
-        self.process.wait(timeout=3)
+        try:
+            self.process.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            os.killpg(self.process.pid, signal.SIGKILL)
+            self.process.wait(timeout=3)
         os.close(self.master)
         os.close(self.slave)
+        self.metadata.cleanup()
 
 
 def environment(root):
@@ -83,6 +99,14 @@ def environment(root):
             env.pop(name)
     env.pop('FZF_DEFAULT_OPTS', None)
     env.pop('FZF_DEFAULT_OPTS_FILE', None)
+    # Never depend on, or launch, agent CLIs installed on the test machine.
+    binaries = root / 'bin'
+    binaries.mkdir()
+    for name in ('claude', 'codex'):
+        binary = binaries / name
+        binary.write_text('#!/bin/sh\necho "Unexpected agent launch in terminal test" >&2\nexit 99\n')
+        binary.chmod(0o755)
+    env['PATH'] = str(binaries) + os.pathsep + env.get('PATH', '')
     return env
 
 
@@ -118,7 +142,12 @@ def modal_case(root, env):
             terminal.read(0.1)
             terminal.send(escape)
             terminal.finish()
-            assert termios.tcgetattr(terminal.slave) == terminal.original, 'TTY mode was not restored'
+            restored = ast.literal_eval(terminal.mode_file.read_text())
+            original = terminal.original
+            # PENDIN is kernel bookkeeping for queued input on BSD systems.
+            restored[3] &= ~getattr(termios, 'PENDIN', 0)
+            original[3] &= ~getattr(termios, 'PENDIN', 0)
+            assert restored == original, 'TTY mode was not restored'
         finally:
             terminal.close()
 
@@ -136,6 +165,7 @@ def picker_case(root, env):
         deadline = time.monotonic() + 1.5
         while time.monotonic() < deadline:
             terminal.read()
+        terminal.output = b''
         terminal.send(b'\x1b')
         terminal.until(b'Directory / title')
         assert terminal.process.poll() is None, 'Escape closed the picker instead of help'
@@ -213,6 +243,9 @@ print(json.dumps({{'result':result}}))
         deadline = time.monotonic() + 0.4
         while time.monotonic() < deadline:
             terminal.read()
+        # Reload may preserve the previously selected session. Navigate to the
+        # top before asserting that the newly open session is sorted first.
+        terminal.send(b'\x1b[A' * 3)
         terminal.send(b'\r')
         terminal.finish()
         calls = [json.loads(line) for line in log.read_text().splitlines()]
