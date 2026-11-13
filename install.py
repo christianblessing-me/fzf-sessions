@@ -51,6 +51,7 @@ def install(prefix: Path, uninstall: bool = False) -> None:
             shutil.copy2(ROOT / name, staging / name)
         shutil.copytree(ROOT / 'fzf_sessions', staging / 'fzf_sessions',
                         ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+        shutil.copytree(ROOT / 'docs', staging / 'docs')
         (staging / 'fzf-sessions').chmod(0o755)
         (staging / MARKER).write_text(MARKER_CONTENT)
         backup = Path(temporary) / 'previous'
