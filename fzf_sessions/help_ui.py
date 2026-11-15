@@ -20,7 +20,7 @@ def shortcut_help(herdr: bool) -> str:
 
     lines = [heading("NAVIGATE"), key("↑ / ↓", "Move between sessions"),
              key("Ctrl-J / Ctrl-K", "Move down / up"),
-             key("Enter", "Jump to an open pane or resume in a new tab" if herdr else "Resume in this terminal"),
+             key("Enter", "Jump to an open pane or resume in a new workspace" if herdr else "Resume in this terminal"),
              key("Esc / Ctrl-C", "Close the picker"), "", heading("SEARCH & PREVIEW"),
              key("Type", "Search the current mode"), key("Alt-S", "Switch directory/title ↔ conversation content"),
              key("Alt-P", "Show or hide the preview"), key("Shift-↑ / Shift-↓", "Scroll the preview"), "",

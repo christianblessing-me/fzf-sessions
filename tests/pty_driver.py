@@ -280,7 +280,7 @@ print(json.dumps({{'result':result}}))
         terminal.finish()
         calls = [json.loads(line) for line in log.read_text().splitlines()]
         assert ['agent', 'focus', 'first-pane'] in calls, calls
-        assert not any(call[:2] == ['tab', 'create'] for call in calls)
+        assert not any(call[:2] in (['tab', 'create'], ['workspace', 'create']) for call in calls)
     finally:
         terminal.close()
 

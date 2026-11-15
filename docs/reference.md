@@ -71,9 +71,9 @@
   one in the calling workspace is preferred.
 - A failed lookup or jump reports an error instead of creating a duplicate.
   If a marked session has disappeared, reopen the list before trying again.
-- New sessions open in a new tab in the calling workspace, using the original folder.
+- Resumed sessions that are not already open get a new workspace, using the original folder.
 - Failed or timed-out commands are not retried automatically. Check the workspace
-  before retrying: a new tab may already exist.
+  before retrying: a new workspace may already exist.
 - Running `fzf-sessions` directly resumes in the current terminal, even inside Herdr.
   Use `--herdr` to request Herdr navigation; the plugin sets this option for you.
 

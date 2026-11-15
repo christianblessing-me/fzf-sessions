@@ -87,33 +87,57 @@ class HerdrTests(unittest.TestCase):
 
     def test_resuming_uses_returned_ids_and_shell_quotes(self):
         session = models_mod.Session('claude', 'session-id', 'Fix login', str(self.root), 0)
-        responses = [{'agents': []}, {'root_pane': {'pane_id': 'opaque-pane'}, 'tab': {'tab_id': 'opaque-tab'}}, {}, {}]
+        responses = [{'agents': []}, {'root_pane': {'pane_id': 'opaque-pane'}, 'workspace': {'workspace_id': 'opaque-workspace'}}, {}, {}]
         with patch.dict(os.environ, self.context), patch.object(shutil, 'which', return_value='/bin/claude'), \
              patch.object(herdr_mod, 'herdr_call', side_effect=responses) as call:
             herdr_mod.resume_herdr(session)
         calls = [c.args[1] for c in call.call_args_list]
         self.assertEqual(calls.pop(0), ['agent', 'list'])
-        self.assertEqual(calls[0][:5], ['tab', 'create', '--workspace', 'w-test', '--cwd'])
+        self.assertEqual(calls[0][:4], ['workspace', 'create', '--cwd', str(self.root)])
+        self.assertNotIn('--workspace', calls[0])
         self.assertIn('--no-focus', calls[0])
         self.assertEqual(calls[1], ['pane', 'run', 'opaque-pane', launch_mod.resume_command(session)])
-        self.assertEqual(calls[2], ['tab', 'focus', 'opaque-tab'])
+        self.assertEqual(calls[2], ['workspace', 'focus', 'opaque-workspace'])
 
-    def test_failed_submission_does_not_retry_or_close_tabs(self):
+    def test_failed_submission_does_not_retry_or_close_workspaces(self):
         session = models_mod.Session('codex', 'id', 'Title', str(self.root), 0)
-        created = {'root_pane': {'pane_id': 'new-pane'}, 'tab': {'tab_id': 'new-tab'}}
+        created = {'root_pane': {'pane_id': 'new-pane'}, 'workspace': {'workspace_id': 'new-workspace'}}
         with patch.dict(os.environ, self.context), patch.object(shutil, 'which', return_value='/bin/codex'), \
              patch.object(herdr_mod, 'herdr_call', side_effect=[{'agents': []}, created, RuntimeError('not ready')]) as call:
-            with self.assertRaisesRegex(RuntimeError, 'Inspect that tab before retrying'):
+            with self.assertRaisesRegex(RuntimeError, 'Inspect that workspace before retrying'):
                 herdr_mod.resume_herdr(session)
         self.assertEqual(call.call_count, 3)
 
-    def test_dry_run_and_missing_directory_never_create_tabs(self):
+    def test_missing_workspace_ids_never_submit_a_resume_command(self):
+        session = models_mod.Session('codex', 'id', 'Title', str(self.root), 0)
+        for created in ({}, {'root_pane': {'pane_id': 'new-pane'}},
+                        {'root_pane': {'pane_id': ''}, 'workspace': {'workspace_id': 'new-workspace'}},
+                        {'root_pane': {'pane_id': 'new-pane'}, 'workspace': {'workspace_id': ''}}):
+            with self.subTest(created=created), patch.dict(os.environ, self.context), \
+                 patch.object(shutil, 'which', return_value='/bin/codex'), \
+                 patch.object(herdr_mod, 'herdr_call', side_effect=[{'agents': []}, created]) as call:
+                with self.assertRaisesRegex(RuntimeError, 'did not return its IDs'):
+                    herdr_mod.resume_herdr(session)
+                self.assertEqual(call.call_count, 2)
+
+    def test_failed_workspace_focus_reports_where_resume_was_submitted(self):
+        session = models_mod.Session('codex', 'id', 'Title', str(self.root), 0)
+        created = {'root_pane': {'pane_id': 'new-pane'}, 'workspace': {'workspace_id': 'new-workspace'}}
+        with patch.dict(os.environ, self.context), patch.object(shutil, 'which', return_value='/bin/codex'), \
+             patch.object(herdr_mod, 'herdr_call', side_effect=[{'agents': []}, created, {}, RuntimeError('focus failed')]) as call:
+            with self.assertRaisesRegex(RuntimeError, 'submitted in workspace new-workspace'):
+                herdr_mod.resume_herdr(session)
+        self.assertEqual(call.call_args.args[1], ['workspace', 'focus', 'new-workspace'])
+        self.assertEqual(call.call_count, 4)
+
+    def test_dry_run_and_missing_directory_never_create_workspaces(self):
         session = models_mod.Session('codex', 'id', 'Title', str(self.root / 'missing'), 0)
         output = io.StringIO()
         with patch.dict(os.environ, self.context), patch.object(herdr_mod, 'herdr_call', return_value={'agents': []}) as call:
             with contextlib.redirect_stdout(output):
                 herdr_mod.resume_herdr(session, dry_run=True)
             self.assertIn('codex resume id', output.getvalue())
+            self.assertIn('new workspace', output.getvalue())
             with self.assertRaisesRegex(RuntimeError, 'no longer exists'):
                 herdr_mod.resume_herdr(session)
             call.assert_called_once_with('/test/herdr', ['agent', 'list'], timeout=3)
@@ -341,7 +365,7 @@ if sys.argv[1:] == ['--version']:
  print('herdr 0.9.5');sys.exit(0)
 with Path(os.environ['TEST_HERDR_LOG']).open('a') as f:
  f.write(json.dumps(sys.argv[1:])+'\\n')
-result = {{'tab': {{'tab_id': 'w7:t19'}}, 'root_pane': {{'pane_id': 'w7:p23'}}}} if sys.argv[1:3] == ['tab','create'] else ({{'agents': json.loads(os.environ.get('TEST_OPEN_AGENTS','[]'))}} if sys.argv[1:3] == ['agent','list'] else {{}})
+result = {{'workspace': {{'workspace_id': 'new-workspace'}}, 'root_pane': {{'pane_id': 'new-pane'}}}} if sys.argv[1:3] == ['workspace','create'] else ({{'agents': json.loads(os.environ.get('TEST_OPEN_AGENTS','[]'))}} if sys.argv[1:3] == ['agent','list'] else {{}})
 print(json.dumps({{'ok': True, 'result': result}}))
 ''')
         fake_fzf = bin_dir / 'fzf'
@@ -372,9 +396,10 @@ print(rows[1])
         self.assertEqual(result.returncode, 0, result.stderr)
         calls = [json.loads(line) for line in log.read_text().splitlines()]
         calls = [call for call in calls if call not in (['api', 'snapshot'], ['agent', 'list'])]
-        self.assertEqual(calls[1][:3], ['pane', 'run', 'w7:p23'])
+        self.assertEqual(calls[0][:4], ['workspace', 'create', '--cwd', str(repo)])
+        self.assertEqual(calls[1][:3], ['pane', 'run', 'new-pane'])
         self.assertEqual(shlex.split(calls[1][3]), ['cd', str(repo), '&&', 'codex', 'resume', 'uuid-test'])
-        self.assertEqual(calls[2], ['tab', 'focus', 'w7:t19'])
+        self.assertEqual(calls[2], ['workspace', 'focus', 'new-workspace'])
         # The fake agent would fail if the standalone resume path were called.
         self.assertEqual(len(calls), 3)
         log.write_text('')

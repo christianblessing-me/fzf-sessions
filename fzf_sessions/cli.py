@@ -76,7 +76,7 @@ def _run_main() -> int:
     parser.add_argument("--tool", choices=("codex", "claude"))
     parser.add_argument("--here", action="store_true", help="only sessions from this exact working directory")
     parser.add_argument("--list", action="store_true", help="list sessions as JSON without opening fzf")
-    parser.add_argument("--herdr", action="store_true", help="focus an open Herdr session, or resume in a new tab")
+    parser.add_argument("--herdr", action="store_true", help="focus an open Herdr session, or resume in a new workspace")
     parser.add_argument("--herdr-open", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--dry-run", action="store_true", help="pick a session and print its resume command")
     args = parser.parse_args()

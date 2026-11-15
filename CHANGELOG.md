@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Resume sessions in a new Herdr workspace instead of a new tab. Sessions that
+  are already open still jump to their existing pane.
+
 ## 0.1.0
 
 Initial release — 13 November 2026.

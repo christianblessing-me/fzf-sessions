@@ -76,7 +76,7 @@ herdr plugin action invoke fzf-sessions.open
 
 - The session list opens in a popup over your workspace.
 - Open sessions appear first, across all tabs and workspaces on the connected server.
-- **Enter** jumps to an existing session. If none is found, it resumes in a new tab.
+- **Enter** jumps to an existing session. If none is found, it resumes in a new workspace.
 - **Alt-R** refreshes which sessions are open.
 - The **OPEN** column uses **●** for a detected session, **—** for no match,
   and **?** while checking or when Herdr is unavailable.

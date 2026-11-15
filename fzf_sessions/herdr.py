@@ -149,7 +149,7 @@ def resume_herdr(session: models_mod.Session, dry_run: bool = False) -> None:
                             session.herdr_locations[0])
             print(f"Herdr: focus existing pane {location['pane_id']} (live identity checked on Enter)")
         else:
-            print(f"Herdr: focus if already open, otherwise new tab in workspace {workspace}")
+            print("Herdr: focus if already open, otherwise resume in a new workspace")
             print(launch_mod.resume_command(session))
         return
     # Refresh only the compact agent inventory, not the full layout snapshot.
@@ -177,23 +177,23 @@ def resume_herdr(session: models_mod.Session, dry_run: bool = False) -> None:
         raise RuntimeError(f"{session.tool} is not installed or is not on PATH")
     title = " ".join(common_mod.clean(session.title).split())
     label = f"{session.tool} · {title[:49]}"
-    created = herdr_call(binary, ["tab", "create", "--workspace", workspace,
-                                  "--cwd", session.cwd, "--label", label, "--no-focus"])
+    created = herdr_call(binary, ["workspace", "create", "--cwd", session.cwd,
+                                  "--label", label, "--no-focus"])
     try:
         pane = created["root_pane"]["pane_id"]
-        tab = created["tab"]["tab_id"]
-        if not isinstance(pane, str) or not isinstance(tab, str):
+        new_workspace = created["workspace"]["workspace_id"]
+        if not all(isinstance(value, str) and value for value in (pane, new_workspace)):
             raise ValueError
     except (KeyError, TypeError, ValueError):
-        raise RuntimeError("Herdr created a tab but did not return its IDs. Check the workspace before retrying.") from None
+        raise RuntimeError("Herdr created a workspace but did not return its IDs. Check Herdr before retrying.") from None
     try:
         # Only run in the new pane returned by Herdr, never in an existing agent's pane.
         # The explicit cd also protects against shell startup hooks changing directory.
         herdr_call(binary, ["pane", "run", pane, launch_mod.resume_command(session)])
     except RuntimeError as exc:
-        raise RuntimeError(f"Created tab {tab}, but resume could not be confirmed. "
-                           f"Inspect that tab before retrying. {exc}") from None
+        raise RuntimeError(f"Created workspace {new_workspace}, but resume could not be confirmed. "
+                           f"Inspect that workspace before retrying. {exc}") from None
     try:
-        herdr_call(binary, ["tab", "focus", tab])
+        herdr_call(binary, ["workspace", "focus", new_workspace])
     except RuntimeError as exc:
-        raise RuntimeError(f"Resume was submitted in tab {tab}, but focusing it failed. {exc}") from None
+        raise RuntimeError(f"Resume was submitted in workspace {new_workspace}, but focusing it failed. {exc}") from None
