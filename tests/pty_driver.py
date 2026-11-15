@@ -244,7 +244,7 @@ if sys.argv[1:3] == ['api','snapshot']:
  time.sleep(.15)
  result={{'snapshot':{{'agents':[agent], 'panes':[], 'workspaces':[], 'tabs':[]}}}}
 elif sys.argv[1:3] == ['agent','list']: result={{'agents':[agent]}}
-elif sys.argv[1:3] == ['agent','focus']: result={{}}
+elif sys.argv[1:3] == ['agent','focus']: sys.exit(0)
 else: print('Unexpected mutation',file=sys.stderr);sys.exit(1)
 print(json.dumps({{'result':result}}))
 ''')

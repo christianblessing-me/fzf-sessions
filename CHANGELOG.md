@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Accept empty success replies from Herdr when submitting resume commands or
+  focusing sessions, instead of showing a false error.
 - Resume sessions in a new Herdr workspace instead of a new tab. Sessions that
   are already open still jump to their existing pane.
 

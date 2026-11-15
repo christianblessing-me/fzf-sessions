@@ -42,6 +42,11 @@ def herdr_call(binary: str, args: list[str], timeout: int = 15) -> dict:
     if result.returncode:
         detail = common_mod.clean(result.stderr.strip())[:600]
         raise RuntimeError(f"Herdr {' '.join(args[:2])} failed: {detail or 'unknown error'}")
+    # These CLI commands can acknowledge success with exit status 0 alone.
+    # Commands that return identities or inventory still require structured data.
+    if not result.stdout.strip() and tuple(args[:2]) in {
+            ("pane", "run"), ("workspace", "focus"), ("agent", "focus")}:
+        return {}
     try:
         response = json.loads(result.stdout)
         if not isinstance(response, dict) or not isinstance(response.get("result"), dict):

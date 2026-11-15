@@ -34,6 +34,27 @@ class HerdrTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.context = {'HERDR_ENV': '1', 'HERDR_WORKSPACE_ID': 'w-test', 'HERDR_BIN_PATH': '/test/herdr'}
 
+    def test_acknowledgement_commands_accept_empty_success(self):
+        for args in (['pane', 'run', 'new-pane', 'echo ready'],
+                     ['workspace', 'focus', 'new-workspace'], ['agent', 'focus', 'existing-pane']):
+            with self.subTest(args=args), patch.object(subprocess, 'run',
+                    return_value=subprocess.CompletedProcess([], 0, '', '')):
+                self.assertEqual(herdr_mod.herdr_call('/test/herdr', args), {})
+
+    def test_data_commands_still_require_json(self):
+        for args in (['workspace', 'create'], ['agent', 'list'], ['api', 'snapshot']):
+            with self.subTest(args=args), patch.object(subprocess, 'run',
+                    return_value=subprocess.CompletedProcess([], 0, '', '')):
+                with self.assertRaisesRegex(RuntimeError, 'unexpected response'):
+                    herdr_mod.herdr_call('/test/herdr', args)
+
+    def test_acknowledgement_errors_and_malformed_output_are_not_success(self):
+        for result, error in ((subprocess.CompletedProcess([], 1, '', 'permission denied'), 'permission denied'),
+                              (subprocess.CompletedProcess([], 0, 'not JSON', ''), 'unexpected response')):
+            with self.subTest(result=result), patch.object(subprocess, 'run', return_value=result):
+                with self.assertRaisesRegex(RuntimeError, error):
+                    herdr_mod.herdr_call('/test/herdr', ['pane', 'run', 'new-pane', 'echo ready'])
+
     def test_outside_herdr_cannot_control_focused_session(self):
         with patch.dict(os.environ, {'HERDR_ENV': '0'}), patch.object(subprocess, 'run') as run:
             with self.assertRaisesRegex(RuntimeError, 'inside a Herdr pane'):
@@ -365,6 +386,8 @@ if sys.argv[1:] == ['--version']:
  print('herdr 0.9.5');sys.exit(0)
 with Path(os.environ['TEST_HERDR_LOG']).open('a') as f:
  f.write(json.dumps(sys.argv[1:])+'\\n')
+if sys.argv[1:3] in (['pane','run'], ['workspace','focus'], ['agent','focus']):
+ sys.exit(0)
 result = {{'workspace': {{'workspace_id': 'new-workspace'}}, 'root_pane': {{'pane_id': 'new-pane'}}}} if sys.argv[1:3] == ['workspace','create'] else ({{'agents': json.loads(os.environ.get('TEST_OPEN_AGENTS','[]'))}} if sys.argv[1:3] == ['agent','list'] else {{}})
 print(json.dumps({{'ok': True, 'result': result}}))
 ''')
