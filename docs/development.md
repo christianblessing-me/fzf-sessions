@@ -58,16 +58,24 @@ FZF_SESSIONS_REQUIRE_PTY=1 python3 -m unittest discover -s tests -v
 - `help_ui.py` — draw the shortcut window and handle its keys.
 - `doctor.py` — report local setup information.
 
-## Prepare a release
+## Lessons from terminal and Herdr testing
 
-1. Update `VERSION`, the source of the CLI version.
-2. Add changes under that version in `CHANGELOG.md`.
-3. Run `python3 scripts/release.py --sync` to update the Herdr manifest.
-4. Run `python3 scripts/release.py` and the full test suite.
-5. Check that GitHub Actions passes on macOS and Linux.
-6. Test the real Herdr plugin: open, search, preview, help, refresh, and jump across workspaces.
-7. Tag the version and publish the reviewed source tree on GitHub.
+- fzf can return status 1 for an expected shortcut when no row is selected.
+  Process the shortcut output before treating status 1 as cancellation.
+- fzf's `execute-silent` can restore terminal input settings after one second.
+  Help must keep raw input active so Escape works even after the user pauses to read it.
+- On macOS, terminal state checks can fail after the controlling session exits.
+  Capture the final state before closing the session. Ignore only kernel bookkeeping
+  such as `PENDIN`, not actual differences in input settings.
+- Wait for fzf's actual state in integration tests instead of relying on fixed delays.
+  The test driver uses a private Unix socket; the application does not need a listener.
+- Put fake Codex and Claude commands on the test PATH so tests cannot launch real agents.
+- Herdr `pane run` acknowledges that a command was queued, not that an agent finished starting.
+  Exit code 0 with no output is a valid acknowledgement.
+- Keep structured-response checks for workspace creation and agent lists: their IDs
+  and session identities are needed to avoid running commands in the wrong pane.
 
-- Include the license, version file, installer, executable, Python package,
-  plugin manifest, and documentation in the release.
-- Keep session history, summary caches, and local test output out of release archives.
+## Releases
+
+- Follow the [release guide](releasing.md) for versioning, packaging, CI, and publishing.
+- Keep `AGENTS.md` in the repo root current so future coding sessions can find these instructions.

@@ -130,6 +130,7 @@ python3 "$HOME/.local/share/fzf-sessions/install.py" --uninstall
 ## More details
 
 - [How sessions, search, and usage counts work](docs/reference.md)
-- [Development, tests, and releases](docs/development.md)
+- [Development and tests](docs/development.md)
+- [Release guide](docs/releasing.md)
 - [Changelog](CHANGELOG.md)
 - [MIT license](LICENSE)
