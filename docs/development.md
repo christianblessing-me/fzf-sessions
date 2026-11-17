@@ -93,3 +93,32 @@ FZF_SESSIONS_REQUIRE_PTY=1 python3 -m unittest discover -s tests -v
   `--list` from the downloaded plugin folder. Confirm that its Python package is present.
 - Check `plugin update` and `plugin uninstall` using the same isolated settings.
 - Use test histories and fake agent commands for any picker test. Do not resume real user sessions.
+
+## Website
+
+- The landing page lives in `site/`: static HTML, CSS, and JavaScript with no build step.
+- Fonts, font licenses, and the product screenshot are bundled in `site/assets/`.
+- The interactive finder uses sample sessions; it does not read history or run commands.
+- The page has no analytics, forms, accounts, or background API requests.
+- Open `site/index.html` locally, or serve it from the repo root:
+
+```sh
+python3 -m http.server 8765 --bind 127.0.0.1 --directory site
+```
+
+- Visit `http://127.0.0.1:8765` and check desktop and phone layouts.
+- Check search modes, previews, install tabs, command copying, and screenshot zoom.
+- `.github/workflows/pages.yml` publishes `site/` when website files change on `main`.
+- The Website workflow can also be started manually. Tool releases are separate.
+- Update the release badge and link in `site/index.html` when promoting a new version.
+- Keep maintenance documentation in `docs/`, outside the published site.
+
+### Domain settings
+
+- Site: `https://fzf-sessions.christianblessing.me`.
+- Repository Settings → Pages uses **GitHub Actions** and this custom domain.
+- Cloudflare CNAME: `fzf-sessions` → `christianblessing-me.github.io`, set to **DNS only**.
+- Keep the blog's existing domain settings and DNS records unchanged.
+- Configure the custom domain in GitHub before adding DNS; allow time for DNS checks.
+- **Enforce HTTPS** is enabled after certificate approval.
+- Actions deployments use the domain in Pages settings; no `CNAME` file is needed.
