@@ -1,5 +1,26 @@
 # Development
 
+## Branches and pull requests
+
+- `main` is the default branch. Herdr installs from it, and website changes deploy from it.
+- `develop` combines changes for the next tool release.
+- Create feature or fix branches from `develop`, such as `feat/session-tags`.
+- Open feature and fix PRs into `develop`. Outside contributors must select this base too.
+- CI runs for PRs into both branches and pushes to either branch.
+- Both branches require a PR, all four test jobs, and resolved review conversations.
+- The PR must be up to date with its base branch. A second reviewer is not required.
+- Squash merging is fine for feature branches. Delete these branches after merging.
+- Never delete `develop`. Use merge commits when merging between `develop` and `main`.
+- For a release, follow the [release guide](releasing.md).
+- Website-only PRs can target `main`. Sync them back to `develop` through a merge PR.
+- Keep the local checkout on `develop` between tasks; create a separate branch for new work.
+
+```sh
+git switch develop
+git pull --ff-only
+git switch -c feat/session-tags
+```
+
 ## Run from source
 
 - Keep the `fzf-sessions` executable, `fzf_sessions/` package, `VERSION`, and

@@ -37,6 +37,14 @@ decisions in the repo rather than relying on a chat transcript.
 
 ## Releases
 
+- Keep `main` as the default branch for Herdr. It contains work ready for users.
+- Start feature and fix branches from `develop`; open PRs into `develop`.
+- Ship a batch through a release PR from `develop` into `main`.
+- Use a merge commit for `develop` → `main` and `main` → `develop`; never squash
+  these long-lived branches. Sync `main` back through a PR after shipping.
+- Website-only changes may use a PR directly into `main`, followed by a sync PR.
+- Both branches require PRs and all four CI checks, with no mandatory second reviewer.
+
 - Follow `docs/releasing.md` when the user asks for a release.
 - `VERSION` is authoritative; sync `herdr-plugin.toml` with the release script.
 - Check CI for the exact commit being released. Report queued, skipped, or failed checks honestly.

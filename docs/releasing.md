@@ -40,8 +40,13 @@ python3 scripts/release.py
 FZF_SESSIONS_REQUIRE_PTY=1 python3 -m unittest discover -s tests -v
 ```
 
-- Stage the intended files explicitly, commit them, and push `main`.
-- Record the exact commit being released. Run the remaining shell examples in
+- Prepare feature and fix PRs against `develop`; merge them after CI passes.
+- Add the version and changelog changes through a PR into `develop` too.
+- Open a release PR from `develop` into `main`. Check its full diff and all four CI jobs.
+- Merge the release PR with **Create a merge commit**. Do not squash or rebase it:
+  these branches need their shared history for the next release.
+- Fetch and fast-forward the local `main` branch to that merged commit.
+- Record the exact commit on `main` being released. Run the remaining shell examples in
   the same terminal so these variables remain set:
 
 ```sh
@@ -191,6 +196,10 @@ gh api "repos/$release_repo/commits/$release_tag" --jq .sha
 - Give the user the release link, the main changes, and the real validation results.
 - Distinguish local test results from hosted CI. Do not describe queued or skipped checks as passed.
 - Leave older releases and their downloads unchanged.
+- Open a PR from `main` back into `develop` and merge it with **Create a merge commit**
+  after CI passes. This keeps release merges and website fixes in the next development cycle.
+- Keep both `main` and `develop`; only delete temporary feature and fix branches.
+- Return the local checkout to `develop` after syncing.
 
 ## Marketplace listing
 
