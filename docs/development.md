@@ -79,3 +79,17 @@ FZF_SESSIONS_REQUIRE_PTY=1 python3 -m unittest discover -s tests -v
 
 - Follow the [release guide](releasing.md) for versioning, packaging, CI, and publishing.
 - Keep `AGENTS.md` in the repo root current so future coding sessions can find these instructions.
+
+## Check a marketplace install
+
+- Test `herdr plugin install christianblessing-me/fzf-sessions --yes` from GitHub,
+  not just the standalone `install.py` path.
+- Use a fresh temporary folder for `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, and
+  `XDG_CACHE_HOME`. Point `HERDR_CONFIG_PATH` at a config file inside that folder.
+- Run `herdr --help` with those settings and confirm its config and log paths are temporary.
+- Run `herdr plugin list` and confirm that the test profile is empty before installing.
+- Do not unregister or replace the user's real development link to perform this check.
+- After installation, check the registered action and run `--version` and a fixture-only
+  `--list` from the downloaded plugin folder. Confirm that its Python package is present.
+- Check `plugin update` and `plugin uninstall` using the same isolated settings.
+- Use test histories and fake agent commands for any picker test. Do not resume real user sessions.

@@ -22,7 +22,8 @@ You need:
 On macOS, install fzf with `brew install fzf`. On Linux, check your package's
 version or download fzf from [its releases](https://github.com/junegunn/fzf/releases).
 
-Clone this repo, then install:
+For the **Herdr plugin**, use the [direct install below](#use-it-in-herdr).
+For the **standalone command**, clone this repo and install:
 
 ```sh
 git clone https://github.com/christianblessing-me/fzf-sessions.git
@@ -70,10 +71,12 @@ fzf-sessions --dry-run       # Print the resume command instead of running it
 Run these commands from a terminal inside Herdr:
 
 ```sh
-herdr plugin link "$HOME/.local/share/fzf-sessions"
+herdr plugin install christianblessing-me/fzf-sessions
 herdr plugin action invoke fzf-sessions.open
 ```
 
+- No need to clone the repo or run `install.py` for the plugin.
+- Python, fzf, and your agent CLI must be on Herdr's PATH.
 - The session list opens in a popup over your workspace.
 - Open sessions appear first, across all tabs and workspaces on the connected server.
 - **Enter** jumps to an existing session. If none is found, it resumes in a new workspace.
@@ -81,6 +84,8 @@ herdr plugin action invoke fzf-sessions.open
 - The **OPEN** column uses **●** for a detected session, **—** for no match,
   and **?** while checking or when Herdr is unavailable.
 - The preview shows where a session is open.
+- Already using a development link? Keep it to follow your local edits. To switch
+  to the GitHub install, run `herdr plugin unlink fzf-sessions` first.
 
 To add a keyboard shortcut, put this in your Herdr config. Choose a key that is free:
 
@@ -115,6 +120,20 @@ description = "Find a coding session"
 - `--doctor` — check your setup without reading conversations or starting agents.
 
 ## Update or remove
+
+### Herdr plugin
+
+```sh
+herdr plugin update fzf-sessions
+herdr plugin uninstall fzf-sessions
+```
+
+- The default GitHub install follows the repo's default branch.
+- If you installed with `--ref`, updates follow that same ref. A pinned release
+  tag stays on that release.
+- Locally linked development copies use your source edits instead.
+
+### Standalone command
 
 - **Update:** get the latest source, close open session lists, and run `python3 install.py` again.
 - **Custom location:** use `python3 install.py --prefix /your/location`.

@@ -184,3 +184,17 @@ gh api "repos/$release_repo/commits/$release_tag" --jq .sha
 - Give the user the release link, the main changes, and the real validation results.
 - Distinguish local test results from hosted CI. Do not describe queued or skipped checks as passed.
 - Leave older releases and their downloads unchanged.
+
+## Marketplace listing
+
+- The public repo uses the GitHub topic `herdr-plugin` for marketplace discovery.
+- The index reads manifests from the default branch, not from the latest release.
+  Keep the root `herdr-plugin.toml` valid and its version aligned with `VERSION`.
+- Publishing a release is separate from updating the default branch. Unreleased
+  code on the default branch can reach people who install the plugin without `--ref`.
+- Keep the GitHub description and the README's direct plugin install command current.
+- Before changing installation behavior, repeat the isolated GitHub install check
+  described in [development.md](development.md#check-a-marketplace-install).
+- The marketplace refreshes about every 30 minutes. Adding the topic makes the
+  repo eligible; it does not prove the listing has appeared or been reviewed.
+- Reference: [Herdr marketplace documentation](https://herdr.dev/tui/docs/marketplace/).
