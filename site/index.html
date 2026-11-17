@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f7f2" />
+    <meta
+      name="description"
+      content="Find and resume Codex and Claude Code sessions across your projects. A local fzf session finder for your terminal and Herdr."
+    />
+    <meta
+      property="og:title"
+      content="fzf-sessions — Pick up where you left off"
+    />
+    <meta
+      property="og:description"
+      content="One place to find your Codex and Claude Code sessions. Search, get the context, and get back to work."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://fzf-sessions.christianblessing.me/" />
+    <link rel="canonical" href="https://fzf-sessions.christianblessing.me/" />
+    <title>fzf-sessions — Pick up where you left off</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="header wrap">
+      <a class="brand" href="#" aria-label="fzf-sessions home"
+        ><span class="brand-mark" aria-hidden="true">›_</span>fzf-sessions</a
+      >
+      <nav aria-label="Main navigation">
+        <a href="#herdr">In Herdr</a>
+        <a href="#install">Install</a>
+        <a
+          class="nav-github"
+          href="https://github.com/christianblessing-me/fzf-sessions"
+          >GitHub <span aria-hidden="true">↗</span></a
+        >
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="hero-heading">
+        <div class="hero-copy">
+          <a
+            class="release-note"
+            href="https://github.com/christianblessing-me/fzf-sessions/releases/tag/v0.2.0"
+            ><span class="tiny-dot" aria-hidden="true"></span>OPEN SOURCE
+            <span class="release-version">v0.2.0 ↗</span></a
+          >
+          <h1 id="hero-heading">
+            Pick up where<br />you left off<span class="period">.</span>
+          </h1>
+          <p class="hero-description">
+            The conversation you need is in there somewhere. Find all your Codex and
+            Claude Code sessions on your machine, and jump right back in.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#install"
+              >Get fzf-sessions <span aria-hidden="true">↓</span></a
+            >
+            <a class="button button-outline" href="https://herdr.dev/tui/plugins/"
+              >Herdr Marketplace <span aria-hidden="true">↗</span></a
+            >
+          </div>
+
+        </div>
+
+        <div class="demo-shell">
+
+          <div class="finder" id="finder">
+            <div class="finder-topbar">
+              <span class="terminal-dots" aria-hidden="true"
+                ><i></i><i></i><i></i></span
+              ><span>fzf-sessions</span
+              ><span class="terminal-path">~/projects</span>
+            </div>
+            <div class="finder-query">
+              <button
+                class="search-mode"
+                id="search-mode"
+                type="button"
+                aria-label="Switch to conversation search"
+              >
+                Directory / title
+              </button>
+              <span class="query-chevron" aria-hidden="true">›</span>
+              <input
+                id="session-query"
+                type="search"
+                placeholder="Find a session…"
+                aria-label="Search example sessions"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded="true"
+                aria-controls="session-list"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <span class="query-count" id="query-count">6/6</span>
+            </div>
+            <div class="finder-main">
+              <div class="finder-results">
+                <div class="session-columns" aria-hidden="true">
+                  <span></span><span class="col-age">WHEN</span
+                  ><span>AGENT</span><span>SESSION</span
+                  ><span class="col-directory">FOLDER</span>
+                </div>
+                <div
+                  class="session-list"
+                  id="session-list"
+                  role="listbox"
+                  aria-label="Example coding sessions"
+                ></div>
+                <p class="empty-results" id="empty-results" hidden>
+                  No matching sessions.<br /><span
+                    >Try “api” or switch search modes.</span
+                  >
+                </p>
+              </div>
+              <aside
+                class="session-preview"
+                id="session-preview"
+                aria-label="Selected example session preview"
+                hidden
+              ></aside>
+            </div>
+            <div class="finder-keybar">
+              <button type="button" id="mode-key">
+                <kbd>alt s</kbd> search</button
+              ><button type="button" id="preview-key" aria-pressed="false">
+                <kbd>alt p</kbd> preview</button
+              ><span><kbd>↵</kbd> resume</span
+              ><span class="finder-help">↑↓ move</span>
+            </div>
+          </div>
+          <p
+            class="demo-feedback"
+            id="demo-feedback"
+            role="status"
+            aria-live="polite"
+          ></p>
+        </div>
+      </section>
+
+      <section
+        class="herdr-section wrap"
+        id="herdr"
+        aria-labelledby="herdr-heading"
+      >
+        <div class="herdr-panel">
+          <div class="herdr-copy">
+            <h2 id="herdr-heading">At home<br />in Herdr.</h2>
+            <p>
+              A floating finder over your workspace. Your open sessions, across
+              tabs and workspaces, right at the top.
+            </p>
+            <ul class="herdr-benefits">
+              <li>
+                <span class="open-indicator" aria-hidden="true"></span>See
+                what's already open.
+              </li>
+              <li>
+                <span class="herdr-enter" aria-hidden="true">↵</span>Jump to the
+                exact pane.
+              </li>
+              <li>
+                <span class="herdr-refresh" aria-hidden="true">↻</span>Refresh
+                without starting over.
+              </li>
+            </ul>
+            <a class="herdr-link" href="https://herdr.dev/tui/plugins/"
+              >Find it in the Herdr marketplace
+              <span aria-hidden="true">↗</span></a
+            >
+            <p class="herdr-footnote">
+              Prefer a regular terminal? Works there too.
+            </p>
+          </div>
+          <figure class="product-figure">
+            <a
+              href="assets/screenshot-fzf-sessions.png"
+              id="open-screenshot"
+              aria-label="Enlarge the actual fzf-sessions screenshot"
+              ><img
+                src="assets/screenshot-fzf-sessions.png"
+                width="1248"
+                height="1260"
+                alt="The real fzf-sessions plugin in a Herdr popup, showing open Claude Code and Codex sessions across projects"
+                loading="lazy"
+              /><span class="enlarge-hint" aria-hidden="true"
+                >↗ Enlarge</span
+              ></a
+            >
+            <figcaption>The actual plugin. A shortcut away.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section
+        class="installation wrap"
+        id="install"
+        aria-labelledby="install-heading"
+      >
+        <h2 id="install-heading" class="sr-only">Install fzf-sessions</h2>
+        <div class="install-box">
+          <div
+            class="install-tabs"
+            role="tablist"
+            aria-label="Installation method"
+          >
+            <button
+              type="button"
+              role="tab"
+              id="tab-herdr"
+              aria-selected="true"
+              aria-controls="panel-herdr"
+              tabindex="0"
+              data-tab="herdr"
+            >
+              Herdr plugin</button
+            ><button
+              type="button"
+              role="tab"
+              id="tab-terminal"
+              aria-selected="false"
+              aria-controls="panel-terminal"
+              tabindex="-1"
+              data-tab="terminal"
+            >
+              Standalone
+            </button>
+          </div>
+          <div
+            role="tabpanel"
+            id="panel-herdr"
+            aria-labelledby="tab-herdr"
+            class="install-panel"
+          >
+            <div class="code-topbar">
+              <span>RUN INSIDE HERDR</span
+              ><button
+                class="copy-button"
+                type="button"
+                data-copy="herdr-commands"
+              >
+                <span class="copy-icon" aria-hidden="true">▣</span
+                ><span class="copy-label">Copy</span>
+              </button>
+            </div>
+            <div class="install-commands" id="herdr-commands">
+              <div>
+                <span aria-hidden="true">$</span
+                ><code
+                  >herdr plugin install christianblessing-me/fzf-sessions</code
+                >
+              </div>
+              <div>
+                <span aria-hidden="true">$</span
+                ><code>herdr plugin action invoke fzf-sessions.open</code>
+              </div>
+            </div>
+            <div class="install-note">
+              <span class="note-arrow" aria-hidden="true">↳</span>
+              <p>
+                Install once. Then bind <code>fzf-sessions.open</code> to a key
+                in your Herdr config.
+              </p>
+            </div>
+          </div>
+          <div
+            role="tabpanel"
+            id="panel-terminal"
+            aria-labelledby="tab-terminal"
+            class="install-panel"
+            hidden
+          >
+            <div class="code-topbar">
+              <span>RUN IN YOUR TERMINAL</span
+              ><button
+                class="copy-button"
+                type="button"
+                data-copy="terminal-commands"
+              >
+                <span class="copy-icon" aria-hidden="true">▣</span
+                ><span class="copy-label">Copy</span>
+              </button>
+            </div>
+            <div class="install-commands" id="terminal-commands">
+              <div>
+                <span aria-hidden="true">$</span
+                ><code
+                  >git clone
+                  https://github.com/christianblessing-me/fzf-sessions.git</code
+                >
+              </div>
+              <div>
+                <span aria-hidden="true">$</span><code>cd fzf-sessions</code>
+              </div>
+              <div>
+                <span aria-hidden="true">$</span><code>python3 install.py</code>
+              </div>
+              <div>
+                <span aria-hidden="true">$</span
+                ><code>export PATH="$HOME/.local/bin:$PATH"</code>
+              </div>
+              <div>
+                <span aria-hidden="true">$</span><code>fzf-sessions</code>
+              </div>
+            </div>
+            <div class="install-note">
+              <span class="note-arrow" aria-hidden="true">↳</span>
+              <p>
+                Already have fzf? You're almost there. Check your setup with
+                <code>fzf-sessions --doctor</code>.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer wrap">
+      <a class="brand footer-brand" href="#"
+        ><span class="brand-mark" aria-hidden="true">›_</span>fzf-sessions</a
+      >
+      <p>Open source. MIT licensed.</p>
+      <div>
+        <a href="https://github.com/christianblessing-me/fzf-sessions"
+          >GitHub ↗</a
+        ><a href="https://github.com/christianblessing-me/fzf-sessions/issues"
+          >Feedback ↗</a
+        ><a
+          href="https://github.com/christianblessing-me/fzf-sessions/blob/main/LICENSE"
+          >License ↗</a
+        >
+      </div>
+    </footer>
+    <dialog id="screenshot-dialog" aria-label="Full fzf-sessions screenshot">
+      <form method="dialog">
+        <button class="dialog-close" aria-label="Close screenshot">
+          Close <kbd>Esc</kbd>
+        </button>
+      </form>
+      <img
+        src="assets/screenshot-fzf-sessions.png"
+        width="1248"
+        height="1260"
+        alt="Full screenshot of fzf-sessions running in Herdr"
+      />
+    </dialog>
+    <div
+      class="sr-only"
+      id="copy-status"
+      role="status"
+      aria-live="polite"
+    ></div>
+    <noscript
+      ><p class="noscript-note">
+        The interactive example needs JavaScript. You can still install the tool
+        using the commands above or read the
+        <a href="https://github.com/christianblessing-me/fzf-sessions"
+          >full documentation</a
+        >.
+      </p></noscript
+    >
+  </body>
+</html>

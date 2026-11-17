@@ -3,6 +3,13 @@
 This is the release guide for maintainers and coding agents. Update it whenever
 the process changes. GitHub Actions runs checks; it does not publish releases.
 
+## Website updates
+
+- The landing page lives in `site/` and uses a separate Website workflow.
+- Changes to `site/` on `main` deploy to `https://fzf-sessions.christianblessing.me`.
+- Website updates do not require a tool version bump or a GitHub release.
+- See [the website guide](../site/README.md) for preview and domain settings.
+
 ## Choose a version
 
 - Use **patch releases** for fixes: `0.2.0` → `0.2.1`.
